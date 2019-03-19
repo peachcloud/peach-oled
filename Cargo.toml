@@ -2,10 +2,15 @@
 name = "peach-oled"
 version = "0.1.0"
 authors = ["Andrew Reid <gnomad@cryptolab.net>"]
+edition = "2018"
 
 [dependencies]
+jsonrpc = "0.10.2"
+jsonrpc-http-server = "10.0"
 linux-embedded-hal = "0.2.2"
 embedded-graphics = "0.4.7"
 machine-ip = "0.2.1"
 tinybmp = "0.1.0"
 ssd1306 = "0.2.4"
+serde = { version = "1.0.87", features = ["derive"] }
+failure = "0.1.5"

@@ -19,6 +19,13 @@ Run the binary:
 
 `./target/debug/peach-oled`
 
+### JSON-RPC
+
+| Method | Parameters | Description |
+| --- | --- | --- |
+| `write` | `x_coord`, `y_coord`, `string` | Write message to display at given co-ordinates |
+| `clear` | | Clear the display |
+
 ### Licensing
 
 AGPL-3.0
