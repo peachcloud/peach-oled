@@ -1,23 +1,23 @@
-extern crate linux_embedded_hal as hal;
 extern crate embedded_graphics;
-extern crate ssd1306;
-extern crate machine_ip;
 extern crate failure;
+extern crate linux_embedded_hal as hal;
+extern crate machine_ip;
+extern crate ssd1306;
 extern crate validator;
 #[macro_use]
 extern crate validator_derive;
 
+use embedded_graphics::coord::Coord;
+use embedded_graphics::fonts::*;
+use embedded_graphics::prelude::*;
 use failure::Fail;
 use hal::I2cdev;
-use embedded_graphics::prelude::*;
-use embedded_graphics::fonts::Font6x8;
-use embedded_graphics::coord::Coord;
-use ssd1306::prelude::*;
-use ssd1306::Builder;
 use jsonrpc_http_server::jsonrpc_core::types::error::Error;
 use jsonrpc_http_server::jsonrpc_core::*;
 use jsonrpc_http_server::*;
 use serde::Deserialize;
+use ssd1306::prelude::*;
+use ssd1306::Builder;
 use std::sync::{Arc, Mutex};
 use validator::{Validate, ValidationErrors};
 
@@ -30,6 +30,7 @@ struct Msg {
     y_coord: i32,
     #[validate(length(max = "21", message = "string length > 21 characters"))]
     string: String,
+    font_size: String,
 }
 
 #[derive(Debug, Fail)]
@@ -38,13 +39,13 @@ pub enum WriteError {
     Invalid { e: ValidationErrors },
 
     #[fail(display = "missing expected parameters")]
-    MissingParams {e: Error},
+    MissingParams { e: Error },
 }
 
 impl From<WriteError> for Error {
     fn from(err: WriteError) -> Self {
         match &err {
-            WriteError::Invalid {e} => {
+            WriteError::Invalid { e } => {
                 let err_clone = e.clone();
                 // extract error from ValidationErrors
                 let field_errs = err_clone.field_errors();
@@ -70,7 +71,7 @@ impl From<WriteError> for Error {
                     data: Some(format!("{:?}", e).into()),
                 }
             }
-            WriteError::MissingParams {e} => Error {
+            WriteError::MissingParams { e } => Error {
                 code: ErrorCode::ServerError(-32602),
                 message: "invalid params".into(),
                 data: Some(format!("{}", e.message).into()),
@@ -106,18 +107,38 @@ fn main() {
                 match m.validate() {
                     Ok(_) => {
                         let mut oled = oled_clone.lock().unwrap();
-                        oled.draw(
-                            Font6x8::render_str(&format!("{}", &m.string))
-                                .translate(Coord::new(m.x_coord, m.y_coord))
-                                .into_iter(),
-                        );
+                        if m.font_size == "6x8".to_string() {
+                            oled.draw(
+                                Font6x8::render_str(&format!("{}", &m.string))
+                                    .translate(Coord::new(m.x_coord, m.y_coord))
+                                    .into_iter(),
+                            );
+                        } else if m.font_size == "6x12".to_string() {
+                            oled.draw(
+                                Font6x12::render_str(&format!("{}", &m.string))
+                                    .translate(Coord::new(m.x_coord, m.y_coord))
+                                    .into_iter(),
+                            );
+                        } else if m.font_size == "8x16".to_string() {
+                            oled.draw(
+                                Font8x16::render_str(&format!("{}", &m.string))
+                                    .translate(Coord::new(m.x_coord, m.y_coord))
+                                    .into_iter(),
+                            );
+                        } else if m.font_size == "12x16".to_string() {
+                            oled.draw(
+                                Font12x16::render_str(&format!("{}", &m.string))
+                                    .translate(Coord::new(m.x_coord, m.y_coord))
+                                    .into_iter(),
+                            );
+                        }
                         oled.flush().unwrap();
                         Ok(Value::String("success".into()))
                     }
-                    Err(e) => Err(Error::from(WriteError::Invalid {e})),
+                    Err(e) => Err(Error::from(WriteError::Invalid { e })),
                 }
             }
-            Err(e) => Err(Error::from(WriteError::MissingParams {e})),
+            Err(e) => Err(Error::from(WriteError::MissingParams { e })),
         }
     });
 
