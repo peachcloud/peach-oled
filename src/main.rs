@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate log;
+extern crate env_logger;
 extern crate embedded_graphics;
 extern crate failure;
 extern crate linux_embedded_hal as hal;
@@ -86,18 +89,27 @@ impl From<WriteError> for Error {
 }
 
 fn main() {
+    // initialize the logger
+    env_logger::init();
+
+    info!("Starting up.");
+
     let i2c = I2cdev::new("/dev/i2c-1").unwrap();
 
     let mut disp: GraphicsMode<_> = Builder::new().connect_i2c(i2c).into();
 
+    info!("Initializing the display.");
     disp.init().unwrap();
     disp.flush().unwrap();
 
     let oled = Arc::new(Mutex::new(disp));
     let oled_clone = Arc::clone(&oled);
+    
+    info!("Creating JSON-RPC I/O handler.");
     let mut io = IoHandler::default();
 
     io.add_method("write", move |params: Params| {
+        info!("Received a 'write' request.");
         // parse parameters and match on result
         let m: Result<Msg> = params.parse();
         match m {
@@ -148,9 +160,11 @@ fn main() {
         let mut oled = oled_clone.lock().unwrap();
         let _ = oled.clear();
         oled.flush().unwrap();
+        info!("Cleared the display.");
         Ok(Value::String("success".into()))
     });
 
+    info!("Creating JSON-RPC server.");
     let server = ServerBuilder::new(io)
         .cors(DomainsValidation::AllowOnly(vec![
             AccessControlAllowOrigin::Null,
@@ -158,5 +172,6 @@ fn main() {
         .start_http(&"127.0.0.1:3031".parse().unwrap())
         .expect("Unable to start RPC server");
 
+    info!("Listening for requests.");
     server.wait();
 }

@@ -33,6 +33,12 @@ Run the binary:
 
 `./target/debug/peach-oled`
 
+Logging is made available with `env_logger`:
+
+`RUST_LOG=info ./target/debug/peach-oled`
+
+_Other logging levels include debug, warn and error._
+
 ### Example Usage
 
 **Write Text to the OLED Display**
