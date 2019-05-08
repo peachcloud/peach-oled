@@ -8,6 +8,7 @@ extern crate validator;
 #[macro_use]
 extern crate validator_derive;
 
+use std::process;
 use std::error::Error as StdError;
 use std::result::Result;
 use std::sync::{Arc, Mutex};
@@ -84,13 +85,13 @@ impl From<WriteError> for Error {
             WriteError::MissingParams { e } => Error {
                 code: ErrorCode::ServerError(-32602),
                 message: "invalid params".into(),
-                data: Some(format!("{}", e.message).into()),
+                data: Some(e.message.to_string().into()),
             },
-            err => Error {
+/*            err => Error {
                 code: ErrorCode::InternalError,
                 message: "internal error".into(),
                 data: Some(format!("{:?}", err).into()),
-            },
+            },*/
         }
     }
 }
@@ -104,8 +105,16 @@ pub fn run() -> Result<(), Box<dyn StdError>> {
     let mut disp: GraphicsMode<_> = Builder::new().connect_i2c(i2c).into();
 
     info!("Initializing the display.");
-    disp.init().unwrap();
-    disp.flush().unwrap();
+    disp.init().unwrap_or_else(|_| {
+        error!("Problem initializing the OLED display.");
+        process::exit(1);
+    });
+    
+    debug!("Flushing the display.");
+    disp.flush().unwrap_or_else(|_| {
+        error!("Problem flushing the OLED display.");
+        process::exit(1);
+    });
 
     let oled = Arc::new(Mutex::new(disp));
     let oled_clone = Arc::clone(&oled);
@@ -124,32 +133,36 @@ pub fn run() -> Result<(), Box<dyn StdError>> {
                 match m.validate() {
                     Ok(_) => {
                         let mut oled = oled_clone.lock().unwrap();
-                        if m.font_size == "6x8".to_string() {
+                        if m.font_size == "6x8" {
                             oled.draw(
-                                Font6x8::render_str(&format!("{}", &m.string))
+                                Font6x8::render_str(&m.string.to_string())
                                     .translate(Coord::new(m.x_coord, m.y_coord))
                                     .into_iter(),
                             );
-                        } else if m.font_size == "6x12".to_string() {
+                        } else if m.font_size == "6x12" {
                             oled.draw(
-                                Font6x12::render_str(&format!("{}", &m.string))
+                                Font6x12::render_str(&m.string.to_string())
                                     .translate(Coord::new(m.x_coord, m.y_coord))
                                     .into_iter(),
                             );
-                        } else if m.font_size == "8x16".to_string() {
+                        } else if m.font_size == "8x16" {
                             oled.draw(
-                                Font8x16::render_str(&format!("{}", &m.string))
+                                Font8x16::render_str(&m.string.to_string())
                                     .translate(Coord::new(m.x_coord, m.y_coord))
                                     .into_iter(),
                             );
-                        } else if m.font_size == "12x16".to_string() {
+                        } else if m.font_size == "12x16" {
                             oled.draw(
-                                Font12x16::render_str(&format!("{}", &m.string))
+                                Font12x16::render_str(&m.string.to_string())
                                     .translate(Coord::new(m.x_coord, m.y_coord))
                                     .into_iter(),
                             );
                         }
-                        oled.flush().unwrap();
+                        debug!("Flushing the display.");
+                        oled.flush().unwrap_or_else(|_| {
+                            error!("Problem flushing the OLED display.");
+                            process::exit(1);
+                        });
                         Ok(Value::String("success".into()))
                     }
                     Err(e) => Err(Error::from(WriteError::Invalid { e })),
@@ -163,8 +176,11 @@ pub fn run() -> Result<(), Box<dyn StdError>> {
 
     io.add_method("clear", move |_| {
         let mut oled = oled_clone.lock().unwrap();
-        let _ = oled.clear();
-        oled.flush().unwrap();
+        oled.clear();
+        oled.flush().unwrap_or_else(|_| {
+            error!("Problem flushing the OLED display.");
+            process::exit(1);
+        });
         info!("Cleared the display.");
         Ok(Value::String("success".into()))
     });
