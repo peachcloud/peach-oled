@@ -9,7 +9,6 @@ extern crate validator;
 extern crate validator_derive;
 
 use std::process;
-use std::error::Error as StdError;
 use std::result::Result;
 use std::sync::{Arc, Mutex};
 
@@ -87,16 +86,11 @@ impl From<WriteError> for Error {
                 message: "invalid params".into(),
                 data: Some(e.message.to_string().into()),
             },
-/*            err => Error {
-                code: ErrorCode::InternalError,
-                message: "internal error".into(),
-                data: Some(format!("{:?}", err).into()),
-            },*/
         }
     }
 }
 
-pub fn run() -> Result<(), Box<dyn StdError>> {
+pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     info!("Starting up.");
 
     debug!("Creating interface for I2C device.");
