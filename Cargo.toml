@@ -5,8 +5,9 @@ authors = ["Andrew Reid <gnomad@cryptolab.net>"]
 edition = "2018"
 
 [dependencies]
-jsonrpc = "0.10.2"
-jsonrpc-http-server = "10.0"
+jsonrpc-core = "11.0.0"
+jsonrpc-http-server = "11.0.0"
+jsonrpc-test = "11.0.0"
 linux-embedded-hal = "0.2.2"
 embedded-graphics = "0.4.7"
 tinybmp = "0.1.0"

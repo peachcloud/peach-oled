@@ -23,9 +23,9 @@ use embedded_graphics::coord::Coord;
 use embedded_graphics::fonts::*;
 use embedded_graphics::prelude::*;
 
-use jsonrpc_http_server::jsonrpc_core::types::error::Error;
-use jsonrpc_http_server::jsonrpc_core::*;
-use jsonrpc_http_server::*;
+use jsonrpc_core::{IoHandler, Value, Params, Error, ErrorCode};
+use jsonrpc_http_server::{ServerBuilder, AccessControlAllowOrigin, DomainsValidation};
+use jsonrpc_test as test;
 
 use validator::{Validate, ValidationErrors};
 
@@ -191,4 +191,26 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     server.wait();
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rpc_internal_error() {
+        // You can also test RPC created without macros:
+        let rpc = {
+            let mut io = IoHandler::new();
+            io.add_method("rpc_test_method", |_| {
+                Err(Error::internal_error())
+            });
+            test::Rpc::from(io)
+        };
+
+        assert_eq!(rpc.request("rpc_test_method", &()), r#"{
+  "code": -32603,
+  "message": "Internal error"
+}"#);
+    }
 }
