@@ -25,6 +25,7 @@ use embedded_graphics::prelude::*;
 
 use jsonrpc_core::{IoHandler, Value, Params, Error, ErrorCode};
 use jsonrpc_http_server::{ServerBuilder, AccessControlAllowOrigin, DomainsValidation};
+#[allow(unused_imports)]
 use jsonrpc_test as test;
 
 use validator::{Validate, ValidationErrors};
@@ -199,18 +200,31 @@ mod tests {
 
     #[test]
     fn rpc_internal_error() {
-        // You can also test RPC created without macros:
         let rpc = {
             let mut io = IoHandler::new();
-            io.add_method("rpc_test_method", |_| {
+            io.add_method("rpc_test_int_err", |_| {
                 Err(Error::internal_error())
             });
             test::Rpc::from(io)
         };
 
-        assert_eq!(rpc.request("rpc_test_method", &()), r#"{
+        assert_eq!(rpc.request("rpc_test_int_err", &()), r#"{
   "code": -32603,
   "message": "Internal error"
 }"#);
     }
+
+    #[test]
+    fn rpc_success() {
+        let rpc = {
+            let mut io = IoHandler::new();
+            io.add_method("rpc_test_success", |_| {
+                Ok(Value::String("success".into()))
+            });
+            test::Rpc::from(io)
+        };
+
+        assert_eq!(rpc.request("rpc_test_success", &()), r#""success""#);
+    }
+
 }
