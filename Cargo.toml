@@ -13,6 +13,7 @@ embedded-graphics = "0.4.7"
 tinybmp = "0.1.0"
 ssd1306 = "0.2.4"
 serde = { version = "1.0.87", features = ["derive"] }
+serde_json = "1.0.39"
 failure = "0.1.5"
 validator = "0.8.0"
 validator_derive = "0.8.0"

@@ -57,22 +57,17 @@ impl From<WriteError> for Error {
     fn from(err: WriteError) -> Self {
         match &err {
             WriteError::Invalid { e } => {
-                let err_clone = e.clone();
-                // extract error from ValidationErrors
-                let field_errs = err_clone.field_errors();
+                let field_errs = e.clone().field_errors();
                 let checks = vec!["x_coord", "y_coord", "string"];
                 // check source of validation err
                 for &error in &checks {
-                    let validation_err = field_errs.get(&error);
-                    if validation_err.is_some() {
-                        let validation_err = validation_err.unwrap();
-                        let err_msg = &validation_err[0].message;
-                        let em = err_msg.clone();
-                        let em = em.expect("failed to unwrap error msg");
+                    if field_errs.get(error).is_some() {
+                        let err_msg = field_errs.get(error).unwrap();
+                        let msg = &err_msg[0].message;
                         return Error {
                             code: ErrorCode::ServerError(1),
                             message: "validation error".into(),
-                            data: Some(format!("{}", em).into()),
+                            data: Some(format!("{:?}", msg).into()),
                         };
                     }
                 }
@@ -198,33 +193,64 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
 mod tests {
     use super::*;
 
-    #[test]
-    fn rpc_internal_error() {
-        let rpc = {
-            let mut io = IoHandler::new();
-            io.add_method("rpc_test_int_err", |_| {
-                Err(Error::internal_error())
-            });
-            test::Rpc::from(io)
-        };
+    use std::borrow::Cow;
+    use std::collections::HashMap;
+    
+    use serde_json::json;
 
-        assert_eq!(rpc.request("rpc_test_int_err", &()), r#"{
-  "code": -32603,
-  "message": "Internal error"
-}"#);
-    }
-
+    // test to ensure correct success response
     #[test]
     fn rpc_success() {
         let rpc = {
             let mut io = IoHandler::new();
-            io.add_method("rpc_test_success", |_| {
+            io.add_method("rpc_success_response", |_| {
                 Ok(Value::String("success".into()))
             });
             test::Rpc::from(io)
         };
 
-        assert_eq!(rpc.request("rpc_test_success", &()), r#""success""#);
+        assert_eq!(rpc.request("rpc_success_response", &()), r#""success""#);
     }
 
+    // test to ensure correct internal error response
+    #[test]
+    fn rpc_internal_error() {
+        let rpc = {
+            let mut io = IoHandler::new();
+            io.add_method("rpc_internal_err", |_| {
+                Err(Error::internal_error())
+            });
+            test::Rpc::from(io)
+        };
+
+        assert_eq!(rpc.request("rpc_internal_err", &()), r#"{
+  "code": -32603,
+  "message": "Internal error"
+}"#);
+    }
+
+    // test to ensure correct invalid parameters error response
+    #[test]
+    fn rpc_invalid_params() {
+        let rpc = {
+            let mut io = IoHandler::new();
+            io.add_method("rpc_invalid_params", |_| {
+                let e = Error {
+                    code: ErrorCode::InvalidParams,
+                    message: String::from("invalid params"),
+                    data: Some(Value::String("Invalid params: invalid type: null, expected struct Msg.".into())),
+                };
+                Err(Error::from(WriteError::MissingParams { e }))
+            });
+            test::Rpc::from(io)
+        };
+
+        // note to self: this is not the response i expected
+        // where is the data i added to the struct above?
+        assert_eq!(rpc.request("rpc_invalid_params", &()), r#"{
+  "code": -32602,
+  "message": "invalid params",
+  "data": "invalid params"
+}"#);
+    }
 }
