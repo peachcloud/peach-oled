@@ -4,32 +4,29 @@ extern crate embedded_graphics;
 extern crate linux_embedded_hal as hal;
 extern crate ssd1306;
 extern crate validator;
-#[macro_use]
-extern crate validator_derive;
 
-use std::process;
-//use std::result::Result;
-use std::sync::{Arc, Mutex};
+mod error;
 
-use hal::I2cdev;
-
-use ssd1306::prelude::*;
-use ssd1306::Builder;
+use std::{
+    process,
+    result::Result,
+    sync::{Arc, Mutex},
+};
 
 use embedded_graphics::coord::Coord;
-use embedded_graphics::fonts::*;
+use embedded_graphics::fonts::{Font12x16, Font6x12, Font6x8, Font8x16}; //*;
 use embedded_graphics::prelude::*;
-
-use jsonrpc_core::{types::error::Error, ErrorCode, IoHandler, Params, Value};
+use hal::I2cdev;
+use jsonrpc_core::{types::error::Error, IoHandler, Params, Value};
 use jsonrpc_http_server::{AccessControlAllowOrigin, DomainsValidation, ServerBuilder};
 #[allow(unused_imports)]
 use jsonrpc_test as test;
-
 use serde::Deserialize;
+use snafu::ResultExt;
+use ssd1306::prelude::*;
+use ssd1306::Builder;
 
-use snafu::{ensure, ResultExt, Snafu};
-
-type Result<T, E = Error> = std::result::Result<T, E>;
+use crate::error::{I2CError, OledError};
 
 //define the Msg struct for receiving display write commands
 #[derive(Debug, Deserialize)]
@@ -39,105 +36,6 @@ pub struct Msg {
     string: String,
     font_size: String,
 }
-
-#[derive(Debug, Snafu)]
-pub enum OledError {
-    #[snafu(display(r#"Coordinate {} out of range {}: {}"#, coord, range, value))]
-    InvalidCoordinate {
-        coord: String,
-        range: String,
-        value: i32,
-    },
-
-    #[snafu(display(r#"String length out of range 0-21: {}"#, len))]
-    InvalidString { len: usize },
-
-    #[snafu(display(r#"Font size invalid: {}"#, font))]
-    InvalidFontSize { font: String },
-
-    #[snafu(display(r#"Missing expected parameter: {}"#, e))]
-    MissingParameter { e: Error },
-
-    #[snafu(display(r#"Failed to parse parameter: {}"#, e))]
-    ParseError {
-        e: Error, //source: jsonrpc_core::types::error::Error,
-    },
-
-    #[snafu(display(r#"Failed to create interface for I2C device: {}"#, source))]
-    I2CError {
-        source: hal::i2cdev::linux::LinuxI2CError,
-    },
-}
-
-impl From<OledError> for Error {
-    fn from(err: OledError) -> Self {
-        match &err {
-            OledError::InvalidString { len } => Error {
-                code: ErrorCode::ServerError(1),
-                message: "validation error".into(),
-                data: Some(format!("String length {} out of range 0-21", len).into()),
-            },
-            OledError::InvalidCoordinate {
-                coord,
-                value,
-                range,
-            } => Error {
-                code: ErrorCode::ServerError(1),
-                message: "validation error".into(),
-                data: Some(
-                    format!("Coordinate {} out of range {}: {}", coord, range, value).into(),
-                ),
-            },
-            OledError::InvalidFontSize { font } => Error {
-                code: ErrorCode::ServerError(1),
-                message: "validation error".into(),
-                data: Some(format!("{} is not an accepted font size", font).into()),
-            },
-            OledError::I2CError { source } => Error {
-                code: ErrorCode::ServerError(2),
-                message: "i2c device error".into(),
-                data: Some(format!("{}", source).into()),
-            },
-            OledError::MissingParameter { e } => e.clone(),
-            OledError::ParseError { e } => e.clone(),
-        }
-    }
-}
-
-/*
-   impl From<WriteError> for Error {
-    fn from(err: WriteError) -> Self {
-        match &err {
-            WriteError::Invalid { e } => {
-                let field_errs = e.clone().field_errors();
-                let checks = vec!["x_coord", "y_coord", "string"];
-                // check source of validation err
-                for &error in &checks {
-                    if field_errs.get(error).is_some() {
-                        let err_msg = field_errs.get(error).unwrap();
-                        let msg = &err_msg[0].message;
-                        return Error {
-                            code: ErrorCode::ServerError(1),
-                            message: "validation error".into(),
-                            data: Some(format!("{:?}", msg).into()),
-                        };
-                    }
-                }
-                Error {
-                    code: ErrorCode::ServerError(1),
-                    message: "validation error".into(),
-                    data: Some(format!("{:?}", e).into()),
-                }
-            }
-            WriteError::MissingParams { e } => Error {
-                code: ErrorCode::ServerError(-32602),
-                message: "invalid params".into(),
-                data: Some(e.message.to_string().into()),
-            },
-        }
-    }
-}
-*/
 
 pub fn run() -> Result<(), OledError> {
     info!("Starting up.");
@@ -167,7 +65,7 @@ pub fn run() -> Result<(), OledError> {
 
     io.add_method("write", move |params: Params| {
         info!("Received a 'write' request.");
-        let m: Result<Msg, Error> = params.parse()?;
+        let m: Result<Msg, Error> = params.parse();
         let m: Msg = m?;
 
         /*ensure!(
