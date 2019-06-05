@@ -1,18 +1,15 @@
 #[macro_use]
 extern crate log;
-extern crate failure;
+extern crate embedded_graphics;
 extern crate linux_embedded_hal as hal;
 extern crate ssd1306;
-extern crate embedded_graphics;
 extern crate validator;
 #[macro_use]
 extern crate validator_derive;
 
 use std::process;
-use std::result::Result;
+//use std::result::Result;
 use std::sync::{Arc, Mutex};
-
-use failure::Fail;
 
 use hal::I2cdev;
 
@@ -23,37 +20,92 @@ use embedded_graphics::coord::Coord;
 use embedded_graphics::fonts::*;
 use embedded_graphics::prelude::*;
 
-use jsonrpc_core::{IoHandler, Value, Params, Error, ErrorCode};
-use jsonrpc_http_server::{ServerBuilder, AccessControlAllowOrigin, DomainsValidation};
+use jsonrpc_core::{types::error::Error, ErrorCode, IoHandler, Params, Value};
+use jsonrpc_http_server::{AccessControlAllowOrigin, DomainsValidation, ServerBuilder};
 #[allow(unused_imports)]
 use jsonrpc_test as test;
 
-use validator::{Validate, ValidationErrors};
-
 use serde::Deserialize;
 
+use snafu::{ensure, ResultExt, Snafu};
+
+type Result<T, E = Error> = std::result::Result<T, E>;
+
 //define the Msg struct for receiving display write commands
-#[derive(Debug, Validate, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct Msg {
-    #[validate(range(min = "0", max = "128", message = "x_coord not in range 0-128"))]
     x_coord: i32,
-    #[validate(range(min = "0", max = "57", message = "y_coord not in range 0-57"))]
     y_coord: i32,
-    #[validate(length(max = "21", message = "string length > 21 characters"))]
     string: String,
     font_size: String,
 }
 
-#[derive(Debug, Fail)]
-pub enum WriteError {
-    #[fail(display = "validation error")]
-    Invalid { e: ValidationErrors },
+#[derive(Debug, Snafu)]
+pub enum OledError {
+    #[snafu(display(r#"Coordinate {} out of range {}: {}"#, coord, range, value))]
+    InvalidCoordinate {
+        coord: String,
+        range: String,
+        value: i32,
+    },
 
-    #[fail(display = "missing expected parameters")]
-    MissingParams { e: Error },
+    #[snafu(display(r#"String length out of range 0-21: {}"#, len))]
+    InvalidString { len: usize },
+
+    #[snafu(display(r#"Font size invalid: {}"#, font))]
+    InvalidFontSize { font: String },
+
+    #[snafu(display(r#"Missing expected parameter: {}"#, e))]
+    MissingParameter { e: Error },
+
+    #[snafu(display(r#"Failed to parse parameter: {}"#, e))]
+    ParseError {
+        e: Error, //source: jsonrpc_core::types::error::Error,
+    },
+
+    #[snafu(display(r#"Failed to create interface for I2C device: {}"#, source))]
+    I2CError {
+        source: hal::i2cdev::linux::LinuxI2CError,
+    },
 }
 
-impl From<WriteError> for Error {
+impl From<OledError> for Error {
+    fn from(err: OledError) -> Self {
+        match &err {
+            OledError::InvalidString { len } => Error {
+                code: ErrorCode::ServerError(1),
+                message: "validation error".into(),
+                data: Some(format!("String length {} out of range 0-21", len).into()),
+            },
+            OledError::InvalidCoordinate {
+                coord,
+                value,
+                range,
+            } => Error {
+                code: ErrorCode::ServerError(1),
+                message: "validation error".into(),
+                data: Some(
+                    format!("Coordinate {} out of range {}: {}", coord, range, value).into(),
+                ),
+            },
+            OledError::InvalidFontSize { font } => Error {
+                code: ErrorCode::ServerError(1),
+                message: "validation error".into(),
+                data: Some(format!("{} is not an accepted font size", font).into()),
+            },
+            OledError::I2CError { source } => Error {
+                code: ErrorCode::ServerError(2),
+                message: "i2c device error".into(),
+                data: Some(format!("{}", source).into()),
+            },
+            OledError::MissingParameter { e } => e.clone(),
+            OledError::ParseError { e } => e.clone(),
+        }
+    }
+}
+
+/*
+   impl From<WriteError> for Error {
     fn from(err: WriteError) -> Self {
         match &err {
             WriteError::Invalid { e } => {
@@ -85,12 +137,13 @@ impl From<WriteError> for Error {
         }
     }
 }
+*/
 
-pub fn run() -> Result<(), Box<dyn std::error::Error>> {
+pub fn run() -> Result<(), OledError> {
     info!("Starting up.");
 
     debug!("Creating interface for I2C device.");
-    let i2c = I2cdev::new("/dev/i2c-1")?;
+    let i2c = I2cdev::new("/dev/i2c-1").context(I2CError)?;
 
     let mut disp: GraphicsMode<_> = Builder::new().connect_i2c(i2c).into();
 
@@ -99,7 +152,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
         error!("Problem initializing the OLED display.");
         process::exit(1);
     });
-    
+
     debug!("Flushing the display.");
     disp.flush().unwrap_or_else(|_| {
         error!("Problem flushing the OLED display.");
@@ -108,58 +161,64 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
 
     let oled = Arc::new(Mutex::new(disp));
     let oled_clone = Arc::clone(&oled);
-    
+
     info!("Creating JSON-RPC I/O handler.");
     let mut io = IoHandler::default();
 
     io.add_method("write", move |params: Params| {
         info!("Received a 'write' request.");
-        // parse parameters and match on result
-        let m: Result<Msg, Error> = params.parse();
-        match m {
-            // if result contains parameters, unwrap
-            Ok(_) => {
-                let m: Msg = m.unwrap();
-                match m.validate() {
-                    Ok(_) => {
-                        let mut oled = oled_clone.lock().unwrap();
-                        if m.font_size == "6x8" {
-                            oled.draw(
-                                Font6x8::render_str(&m.string.to_string())
-                                    .translate(Coord::new(m.x_coord, m.y_coord))
-                                    .into_iter(),
-                            );
-                        } else if m.font_size == "6x12" {
-                            oled.draw(
-                                Font6x12::render_str(&m.string.to_string())
-                                    .translate(Coord::new(m.x_coord, m.y_coord))
-                                    .into_iter(),
-                            );
-                        } else if m.font_size == "8x16" {
-                            oled.draw(
-                                Font8x16::render_str(&m.string.to_string())
-                                    .translate(Coord::new(m.x_coord, m.y_coord))
-                                    .into_iter(),
-                            );
-                        } else if m.font_size == "12x16" {
-                            oled.draw(
-                                Font12x16::render_str(&m.string.to_string())
-                                    .translate(Coord::new(m.x_coord, m.y_coord))
-                                    .into_iter(),
-                            );
-                        }
-                        debug!("Flushing the display.");
-                        oled.flush().unwrap_or_else(|_| {
-                            error!("Problem flushing the OLED display.");
-                            process::exit(1);
-                        });
-                        Ok(Value::String("success".into()))
-                    }
-                    Err(e) => Err(Error::from(WriteError::Invalid { e })),
-                }
+        let m: Result<Msg, Error> = params.parse()?;
+        let m: Msg = m?;
+
+        /*ensure!(
+            &m.string.len() <= &21,
+            InvalidString {
+                len: &m.string.len()
             }
-            Err(e) => Err(Error::from(WriteError::MissingParams { e })),
+        );
+        ensure!(
+            m.x_coord >= 0,
+            InvalidCoordinate {
+                coord: "x".to_string(),
+                range: "0-128".to_string(),
+                value: m.x_coord,
+            }
+        );*/
+
+        let mut oled = oled_clone.lock().unwrap();
+
+        if m.font_size == "6x8" {
+            oled.draw(
+                Font6x8::render_str(&m.string.to_string())
+                    .translate(Coord::new(m.x_coord, m.y_coord))
+                    .into_iter(),
+            );
+        } else if m.font_size == "6x12" {
+            oled.draw(
+                Font6x12::render_str(&m.string.to_string())
+                    .translate(Coord::new(m.x_coord, m.y_coord))
+                    .into_iter(),
+            );
+        } else if m.font_size == "8x16" {
+            oled.draw(
+                Font8x16::render_str(&m.string.to_string())
+                    .translate(Coord::new(m.x_coord, m.y_coord))
+                    .into_iter(),
+            );
+        } else if m.font_size == "12x16" {
+            oled.draw(
+                Font12x16::render_str(&m.string.to_string())
+                    .translate(Coord::new(m.x_coord, m.y_coord))
+                    .into_iter(),
+            );
         }
+        debug!("Flushing the display.");
+        oled.flush().unwrap_or_else(|_| {
+            error!("Problem flushing the OLED display.");
+            process::exit(1);
+        });
+
+        Ok(Value::String("success".into()))
     });
 
     let oled_clone = Arc::clone(&oled);
@@ -195,7 +254,7 @@ mod tests {
 
     use std::borrow::Cow;
     use std::collections::HashMap;
-    
+
     use serde_json::json;
 
     // test to ensure correct success response
@@ -217,16 +276,17 @@ mod tests {
     fn rpc_internal_error() {
         let rpc = {
             let mut io = IoHandler::new();
-            io.add_method("rpc_internal_err", |_| {
-                Err(Error::internal_error())
-            });
+            io.add_method("rpc_internal_err", |_| Err(Error::internal_error()));
             test::Rpc::from(io)
         };
 
-        assert_eq!(rpc.request("rpc_internal_err", &()), r#"{
+        assert_eq!(
+            rpc.request("rpc_internal_err", &()),
+            r#"{
   "code": -32603,
   "message": "Internal error"
-}"#);
+}"#
+        );
     }
 
     // test to ensure correct invalid parameters error response
@@ -238,7 +298,9 @@ mod tests {
                 let e = Error {
                     code: ErrorCode::InvalidParams,
                     message: String::from("invalid params"),
-                    data: Some(Value::String("Invalid params: invalid type: null, expected struct Msg.".into())),
+                    data: Some(Value::String(
+                        "Invalid params: invalid type: null, expected struct Msg.".into(),
+                    )),
                 };
                 Err(Error::from(WriteError::MissingParams { e }))
             });
@@ -247,10 +309,13 @@ mod tests {
 
         // note to self: this is not the response i expected
         // where is the data i added to the struct above?
-        assert_eq!(rpc.request("rpc_invalid_params", &()), r#"{
+        assert_eq!(
+            rpc.request("rpc_invalid_params", &()),
+            r#"{
   "code": -32602,
   "message": "invalid params",
   "data": "invalid params"
-}"#);
+}"#
+        );
     }
 }
