@@ -52,6 +52,16 @@ fn validate(m: &Msg) -> Result<(), OledError> {
             value: m.x_coord,
         }
     );
+
+    ensure!(
+        m.x_coord < 129,
+        InvalidCoordinate {
+            coord: "x".to_string(),
+            range: "0-128".to_string(),
+            value: m.x_coord,
+        }
+    );
+
     Ok(())
 }
 
