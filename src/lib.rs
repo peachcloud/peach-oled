@@ -3,7 +3,6 @@ extern crate log;
 extern crate embedded_graphics;
 extern crate linux_embedded_hal as hal;
 extern crate ssd1306;
-extern crate validator;
 
 mod error;
 
@@ -14,7 +13,7 @@ use std::{
 };
 
 use embedded_graphics::coord::Coord;
-use embedded_graphics::fonts::{Font12x16, Font6x12, Font6x8, Font8x16}; //*;
+use embedded_graphics::fonts::{Font12x16, Font6x12, Font6x8, Font8x16};
 use embedded_graphics::prelude::*;
 use hal::I2cdev;
 use jsonrpc_core::{types::error::Error, IoHandler, Params, Value};
@@ -22,11 +21,11 @@ use jsonrpc_http_server::{AccessControlAllowOrigin, DomainsValidation, ServerBui
 #[allow(unused_imports)]
 use jsonrpc_test as test;
 use serde::Deserialize;
-use snafu::ResultExt;
+use snafu::{ensure, ResultExt};
 use ssd1306::prelude::*;
 use ssd1306::Builder;
 
-use crate::error::{I2CError, OledError};
+use crate::error::{I2CError, InvalidCoordinate, InvalidString, OledError};
 
 //define the Msg struct for receiving display write commands
 #[derive(Debug, Deserialize)]
@@ -35,6 +34,25 @@ pub struct Msg {
     y_coord: i32,
     string: String,
     font_size: String,
+}
+
+fn validate(m: &Msg) -> Result<(), OledError> {
+    ensure!(
+        m.string.len() <= 21,
+        InvalidString {
+            len: m.string.len()
+        }
+    );
+
+    ensure!(
+        m.x_coord >= 0,
+        InvalidCoordinate {
+            coord: "x".to_string(),
+            range: "0-128".to_string(),
+            value: m.x_coord,
+        }
+    );
+    Ok(())
 }
 
 pub fn run() -> Result<(), OledError> {
@@ -67,21 +85,7 @@ pub fn run() -> Result<(), OledError> {
         info!("Received a 'write' request.");
         let m: Result<Msg, Error> = params.parse();
         let m: Msg = m?;
-
-        /*ensure!(
-            &m.string.len() <= &21,
-            InvalidString {
-                len: &m.string.len()
-            }
-        );
-        ensure!(
-            m.x_coord >= 0,
-            InvalidCoordinate {
-                coord: "x".to_string(),
-                range: "0-128".to_string(),
-                value: m.x_coord,
-            }
-        );*/
+        validate(&m)?;
 
         let mut oled = oled_clone.lock().unwrap();
 
