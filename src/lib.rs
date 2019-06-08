@@ -137,12 +137,12 @@ pub fn run() -> Result<(), OledError> {
 
     io.add_method("clear", move |_| {
         let mut oled = oled_clone.lock().unwrap();
+        info!("Clearing the display.");
         oled.clear();
         oled.flush().unwrap_or_else(|_| {
             error!("Problem flushing the OLED display.");
             process::exit(1);
         });
-        info!("Cleared the display.");
         Ok(Value::String("success".into()))
     });
 
@@ -164,10 +164,7 @@ pub fn run() -> Result<(), OledError> {
 mod tests {
     use super::*;
 
-    use std::borrow::Cow;
-    use std::collections::HashMap;
-
-    use serde_json::json;
+    use jsonrpc_core::ErrorCode;
 
     // test to ensure correct success response
     #[test]
@@ -214,19 +211,17 @@ mod tests {
                         "Invalid params: invalid type: null, expected struct Msg.".into(),
                     )),
                 };
-                Err(Error::from(WriteError::MissingParams { e }))
+                Err(Error::from(OledError::MissingParameter { e }))
             });
             test::Rpc::from(io)
         };
 
-        // note to self: this is not the response i expected
-        // where is the data i added to the struct above?
         assert_eq!(
             rpc.request("rpc_invalid_params", &()),
             r#"{
   "code": -32602,
   "message": "invalid params",
-  "data": "invalid params"
+  "data": "Invalid params: invalid type: null, expected struct Msg."
 }"#
         );
     }
