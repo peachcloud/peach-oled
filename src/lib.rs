@@ -124,12 +124,19 @@ pub fn run() -> Result<(), OledError> {
                     .into_iter(),
             );
         }
-        debug!("Flushing the display.");
+
+        Ok(Value::String("success".into()))
+    });
+
+    let oled_clone = Arc::clone(&oled);
+
+    io.add_method("flush", move |_| {
+        let mut oled = oled_clone.lock().unwrap();
+        info!("Flushing the display.");
         oled.flush().unwrap_or_else(|_| {
             error!("Problem flushing the OLED display.");
             process::exit(1);
         });
-
         Ok(Value::String("success".into()))
     });
 
@@ -139,6 +146,7 @@ pub fn run() -> Result<(), OledError> {
         let mut oled = oled_clone.lock().unwrap();
         info!("Clearing the display.");
         oled.clear();
+        info!("Flushing the display.");
         oled.flush().unwrap_or_else(|_| {
             error!("Problem flushing the OLED display.");
             process::exit(1);
