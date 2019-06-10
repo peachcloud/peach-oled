@@ -11,6 +11,7 @@ OLED microservice module for PeachCloud. Write to a 128x64 OLED display with SDD
 | Method | Parameters | Description |
 | --- | --- | --- |
 | `write` | `x_coord`, `y_coord`, `string`, `font_size` | Write message to display at given co-ordinates using given font size |
+| `flush` | | Flush the display |
 | `clear` | | Clear the display |
 
 | Font Sizes |
@@ -53,13 +54,15 @@ Server responds with:
 
 `{"jsonrpc":"2.0","result":success","id":1}`
 
-OLED display shows:
-
-`Welcome to PeachCloud!`
+OLED will remain blank because no flush command has been issued.
 
 Write to the second line of the display:
 
 `curl -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "method": "write", "params" : {"x_coord": 0, "y_coord": 8, "string": "Born in cypherspace", "font_size": "6x12" }, "id":1 }' 127.0.0.1:3031`
+
+Flush the display:
+
+`curl -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "method": "flush", "id":1 }' 127.0.0.1:3031`
 
 OLED display shows:
 
@@ -68,15 +71,15 @@ OLED display shows:
 
 Validation checks are performed for all three parameters: `x_coord`, `y_coord` and `string`. An appropriate error is returned if the validation checks are not satisfied:
 
-`{"jsonrpc":"2.0","error":{"code":1,"message":"validation error","data":"x_coord not in range 0-128"},"id":1}`
+`{"jsonrpc":"2.0","error":{"code":1,"message":"Validation error: coordinate x out of range 0-128: 129."},"id":1}`
 
 `{"jsonrpc":"2.0","error":{"code":1,"message":"validation error","data":"y_coord not in range 0-57"},"id":1}`
 
-`{"jsonrpc":"2.0","error":{"code":1,"message":"validation error","data":"string length > 21 characters"},"id":1}`
+`{"jsonrpc":"2.0","error":{"code":1,"message":"Validation error: string length 47 out of range 0-21."},"id":1}`
 
 An error is returned if one or all of the expected parameters are not supplied:
 
-`{"jsonrpc":"2.0","error":{"code":-32602,"message":"invalid params","data":"Invalid params: missing field `string`."},"id":1}`
+`{"jsonrpc":"2.0","error":{"code":-32602,"message":"Invalid params: missing field `font_size`."},"id":1}`
 
 -----
 
