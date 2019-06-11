@@ -16,6 +16,7 @@ pub enum OledError {
     #[snafu(display("String length out of range 0-21: {}", len))]
     InvalidString { len: usize },
 
+    // TODO: implement for validate() in src/lib.rs
     #[snafu(display("Font size invalid: {}", font))]
     InvalidFontSize { font: String },
 

@@ -62,6 +62,24 @@ fn validate(m: &Msg) -> Result<(), OledError> {
         }
     );
 
+    ensure!(
+        m.y_coord >= 0,
+        InvalidCoordinate {
+            coord: "y".to_string(),
+            range: "0-47".to_string(),
+            value: m.y_coord,
+        }
+    );
+
+    ensure!(
+        m.y_coord < 148,
+        InvalidCoordinate {
+            coord: "y".to_string(),
+            range: "0-47".to_string(),
+            value: m.y_coord,
+        }
+    );
+
     Ok(())
 }
 
