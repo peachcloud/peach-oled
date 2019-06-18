@@ -14,6 +14,7 @@ use std::{
 
 use embedded_graphics::coord::Coord;
 use embedded_graphics::fonts::{Font12x16, Font6x12, Font6x8, Font8x16};
+use embedded_graphics::image::Image1BPP;
 use embedded_graphics::prelude::*;
 use hal::I2cdev;
 use jsonrpc_core::{types::error::Error, IoHandler, Params, Value};
@@ -27,7 +28,17 @@ use ssd1306::Builder;
 
 use crate::error::{I2CError, InvalidCoordinate, InvalidString, OledError};
 
-//define the Msg struct for receiving display write commands
+//define the Pixels struct for receiving draw commands
+#[derive(Debug, Deserialize)]
+pub struct Pixels {
+    bytes: Vec<u8>,
+    //width: u8,
+    //height: u8,
+    //x_coord: u8,
+    //y_coord: u8
+}
+
+//define the Msg struct for receiving write commands
 #[derive(Debug, Deserialize)]
 pub struct Msg {
     x_coord: i32,
@@ -109,6 +120,47 @@ pub fn run() -> Result<(), OledError> {
     info!("Creating JSON-RPC I/O handler.");
     let mut io = IoHandler::default();
 
+    io.add_method("clear", move |_| {
+        let mut oled = oled_clone.lock().unwrap();
+        info!("Clearing the display.");
+        oled.clear();
+        info!("Flushing the display.");
+        oled.flush().unwrap_or_else(|_| {
+            error!("Problem flushing the OLED display.");
+            process::exit(1);
+        });
+        Ok(Value::String("success".into()))
+    });
+
+    let oled_clone = Arc::clone(&oled);
+
+    io.add_method("draw", move |params: Params| {
+        // TODO: create a struct for all draw parameters:
+        // u8 byte array, dimensions (x & y), coordinates (x & y)
+        let p: Result<Vec<u8>, Error> = params.parse();
+        let bytes: Vec<u8> = p?;
+        // TODO: add simple byte validation function
+        let mut oled = oled_clone.lock().unwrap();
+        info!("Drawing image to the display.");
+        let im = Image1BPP::new(&bytes, 64, 64).translate(Coord::new(32, 0));
+        oled.draw(im.into_iter());
+        Ok(Value::String("success".into()))
+    });
+
+    let oled_clone = Arc::clone(&oled);
+
+    io.add_method("flush", move |_| {
+        let mut oled = oled_clone.lock().unwrap();
+        info!("Flushing the display.");
+        oled.flush().unwrap_or_else(|_| {
+            error!("Problem flushing the OLED display.");
+            process::exit(1);
+        });
+        Ok(Value::String("success".into()))
+    });
+
+    let oled_clone = Arc::clone(&oled);
+
     io.add_method("write", move |params: Params| {
         info!("Received a 'write' request.");
         let m: Result<Msg, Error> = params.parse();
@@ -117,6 +169,7 @@ pub fn run() -> Result<(), OledError> {
 
         let mut oled = oled_clone.lock().unwrap();
 
+        info!("Writing to the display.");
         if m.font_size == "6x8" {
             oled.draw(
                 Font6x8::render_str(&m.string.to_string())
@@ -143,32 +196,6 @@ pub fn run() -> Result<(), OledError> {
             );
         }
 
-        Ok(Value::String("success".into()))
-    });
-
-    let oled_clone = Arc::clone(&oled);
-
-    io.add_method("flush", move |_| {
-        let mut oled = oled_clone.lock().unwrap();
-        info!("Flushing the display.");
-        oled.flush().unwrap_or_else(|_| {
-            error!("Problem flushing the OLED display.");
-            process::exit(1);
-        });
-        Ok(Value::String("success".into()))
-    });
-
-    let oled_clone = Arc::clone(&oled);
-
-    io.add_method("clear", move |_| {
-        let mut oled = oled_clone.lock().unwrap();
-        info!("Clearing the display.");
-        oled.clear();
-        info!("Flushing the display.");
-        oled.flush().unwrap_or_else(|_| {
-            error!("Problem flushing the OLED display.");
-            process::exit(1);
-        });
         Ok(Value::String("success".into()))
     });
 
