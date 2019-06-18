@@ -32,10 +32,10 @@ use crate::error::{I2CError, InvalidCoordinate, InvalidString, OledError};
 #[derive(Debug, Deserialize)]
 pub struct Pixels {
     bytes: Vec<u8>,
-    //width: u8,
-    //height: u8,
-    //x_coord: u8,
-    //y_coord: u8
+    width: u32,
+    height: u32,
+    x_coord: i32,
+    y_coord: i32,
 }
 
 //define the Msg struct for receiving write commands
@@ -135,14 +135,13 @@ pub fn run() -> Result<(), OledError> {
     let oled_clone = Arc::clone(&oled);
 
     io.add_method("draw", move |params: Params| {
-        // TODO: create a struct for all draw parameters:
-        // u8 byte array, dimensions (x & y), coordinates (x & y)
-        let p: Result<Vec<u8>, Error> = params.parse();
-        let bytes: Vec<u8> = p?;
+        let p: Result<Pixels, Error> = params.parse();
+        let p: Pixels = p?;
         // TODO: add simple byte validation function
         let mut oled = oled_clone.lock().unwrap();
         info!("Drawing image to the display.");
-        let im = Image1BPP::new(&bytes, 64, 64).translate(Coord::new(32, 0));
+        let im =
+            Image1BPP::new(&p.bytes, p.width, p.height).translate(Coord::new(p.x_coord, p.y_coord));
         oled.draw(im.into_iter());
         Ok(Value::String("success".into()))
     });
