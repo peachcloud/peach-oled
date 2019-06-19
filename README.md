@@ -100,7 +100,7 @@ Flush the display:
 
 `curl -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "method": "flush", "id":1 }' 127.0.0.1:3031`
 
-OLED display shows a 10x10 graphic of a dot inside a cirle.
+OLED display shows a 10x10 graphic of a dot inside a circle.
 
 No validation checks are currently performed on the parameters of the `draw` RPC, aside from type-checks when the parameters are parsed.
 
