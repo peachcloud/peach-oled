@@ -10,9 +10,10 @@ OLED microservice module for PeachCloud. Write to a 128x64 OLED display with SDD
 
 | Method | Parameters | Description |
 | --- | --- | --- |
-| `write` | `x_coord`, `y_coord`, `string`, `font_size` | Write message to display at given co-ordinates using given font size |
+| `write` | `x_coord`, `y_coord`, `string`, `font_size` | Write message to display buffer for given co-ordinates using given font size |
+| `draw` | `bytes`, `width`, `height`, `x_coord`, `y_coord` | Draw graphic to display buffer for given byte array, dimensions and co-ordinates |
+| `clear` | | Clear the display buffer |
 | `flush` | | Flush the display |
-| `clear` | | Clear the display |
 
 | Font Sizes |
 | --- |
@@ -80,6 +81,28 @@ Validation checks are performed for all three parameters: `x_coord`, `y_coord` a
 An error is returned if one or all of the expected parameters are not supplied:
 
 `{"jsonrpc":"2.0","error":{"code":-32602,"message":"Invalid params: missing field `font_size`."},"id":1}`
+
+-----
+
+**Draw Graphic to the OLED Display**
+
+With microservice running, open a second terminal window and use `curl` to call server methods:
+
+`curl -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "method": "draw", "params" : {"bytes": [30, 0, 33, 0, 64, 128, 128, 64, 140, 64, 140, 64, 128, 64, 64, 128, 33, 0, 30, 0], "width": 10, "height": 10, "x_coord": 32, "y_coord": 32}, "id":1 }' 127.0.0.1:3031`
+
+Server responds with:
+
+`{"jsonrpc":"2.0","result":success","id":1}`
+
+OLED will remain blank because no flush command has been issued.
+
+Flush the display:
+
+`curl -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "method": "flush", "id":1 }' 127.0.0.1:3031`
+
+OLED display shows a 10x10 graphic of a dot inside a cirle.
+
+No validation checks are currently performed on the parameters of the `draw` RPC, aside from type-checks when the parameters are parsed.
 
 -----
 

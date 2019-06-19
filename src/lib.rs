@@ -28,9 +28,9 @@ use ssd1306::Builder;
 
 use crate::error::{I2CError, InvalidCoordinate, InvalidString, OledError};
 
-//define the Pixels struct for receiving draw commands
+//define the Graphic struct for receiving draw commands
 #[derive(Debug, Deserialize)]
-pub struct Pixels {
+pub struct Graphic {
     bytes: Vec<u8>,
     width: u32,
     height: u32,
@@ -135,13 +135,13 @@ pub fn run() -> Result<(), OledError> {
     let oled_clone = Arc::clone(&oled);
 
     io.add_method("draw", move |params: Params| {
-        let p: Result<Pixels, Error> = params.parse();
-        let p: Pixels = p?;
+        let g: Result<Graphic, Error> = params.parse();
+        let g: Graphic = g?;
         // TODO: add simple byte validation function
         let mut oled = oled_clone.lock().unwrap();
         info!("Drawing image to the display.");
         let im =
-            Image1BPP::new(&p.bytes, p.width, p.height).translate(Coord::new(p.x_coord, p.y_coord));
+            Image1BPP::new(&g.bytes, g.width, g.height).translate(Coord::new(g.x_coord, g.y_coord));
         oled.draw(im.into_iter());
         Ok(Value::String("success".into()))
     });
