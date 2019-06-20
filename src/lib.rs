@@ -237,12 +237,12 @@ mod tests {
     fn rpc_internal_error() {
         let rpc = {
             let mut io = IoHandler::new();
-            io.add_method("rpc_internal_err", |_| Err(Error::internal_error()));
+            io.add_method("rpc_internal_error", |_| Err(Error::internal_error()));
             test::Rpc::from(io)
         };
 
         assert_eq!(
-            rpc.request("rpc_internal_err", &()),
+            rpc.request("rpc_internal_error", &()),
             r#"{
   "code": -32603,
   "message": "Internal error"
@@ -277,4 +277,99 @@ mod tests {
 }"#
         );
     }
+
+    // test to ensure correct InvalidString error response
+    #[test]
+    fn rpc_invalid_string() {
+        let rpc = {
+            let mut io = IoHandler::new();
+            io.add_method("rpc_invalid_string", |_| {
+                Err(Error::from(OledError::InvalidString { len: 22 }))
+            });
+            test::Rpc::from(io)
+        };
+
+        assert_eq!(
+            rpc.request("rpc_invalid_string", &()),
+            r#"{
+  "code": 4,
+  "message": "Validation error: string length 22 out of range 0-21."
+}"#
+        );
+    }
+
+    // test to ensure correct InvalidCoordinate error response
+    #[test]
+    fn rpc_invalid_coord() {
+        let rpc = {
+            let mut io = IoHandler::new();
+            io.add_method("rpc_invalid_coord", |_| {
+                Err(Error::from(OledError::InvalidCoordinate {
+                    coord: "x".to_string(),
+                    range: "0-128".to_string(),
+                    value: 321,
+                }))
+            });
+            test::Rpc::from(io)
+        };
+
+        assert_eq!(
+            rpc.request("rpc_invalid_coord", &()),
+            r#"{
+  "code": 2,
+  "message": "Validation error: coordinate x out of range 0-128: 321."
+}"#
+        );
+    }
+
+    // test to ensure correct InvalidFontSize error response
+    #[test]
+    fn rpc_invalid_fontsize() {
+        let rpc = {
+            let mut io = IoHandler::new();
+            io.add_method("rpc_invalid_fontsize", |_| {
+                Err(Error::from(OledError::InvalidFontSize {
+                    font: "24x32".to_string(),
+                }))
+            });
+            test::Rpc::from(io)
+        };
+
+        assert_eq!(
+            rpc.request("rpc_invalid_fontsize", &()),
+            r#"{
+  "code": 3,
+  "message": "Validation error: 24x32 is not an accepted font size. Use 6x8, 6x12, 8x16 or 12x16 instead."
+}"#
+        );
+    }
+
+    // test to ensure correct parse error response
+    #[test]
+    fn rpc_parse_error() {
+        let rpc = {
+            let mut io = IoHandler::new();
+            io.add_method("rpc_parse_error", |_| {
+                let e = Error {
+                    code: ErrorCode::ParseError,
+                    message: String::from("Parse error"),
+                    data: None,
+                };
+                Err(Error::from(OledError::ParseError { e }))
+            });
+            test::Rpc::from(io)
+        };
+
+        assert_eq!(
+            rpc.request("rpc_parse_error", &()),
+            r#"{
+  "code": -32700,
+  "message": "Parse error"
+}"#
+        );
+    }
+
+    // implement tests for variants std::io::Error and nix::Error
+    //  of i2cdev::linux::LinuxI2CError
+
 }
