@@ -36,30 +36,30 @@ impl From<OledError> for Error {
     fn from(err: OledError) -> Self {
         match &err {
             OledError::I2CError { source } => Error {
-                code: ErrorCode::ServerError(1),
-                message: "I2C device error.".to_string(),
-                data: Some(format!("{}", source).into()),
+                code: ErrorCode::ServerError(-32000),
+                message: format!("I2C device error: {}", source),
+                data: None,
             },
             OledError::InvalidCoordinate {
                 coord,
                 value,
                 range,
             } => Error {
-                code: ErrorCode::ServerError(2),
+                code: ErrorCode::ServerError(-32001),
                 message: format!(
-                    "Validation error: coordinate {} out of range {}: {}.",
+                    "Validation error: coordinate {} out of range {}: {}",
                     coord, range, value
                 ),
                 data: None,
             },
             OledError::InvalidFontSize { font } => Error {
-                code: ErrorCode::ServerError(3),
-                message: format!("Validation error: {} is not an accepted font size. Use 6x8, 6x12, 8x16 or 12x16 instead.", font),
+                code: ErrorCode::ServerError(-32002),
+                message: format!("Validation error: {} is not an accepted font size. Use 6x8, 6x12, 8x16 or 12x16 instead", font),
                 data: None,
             },
             OledError::InvalidString { len } => Error {
-                code: ErrorCode::ServerError(4),
-                message: format!("Validation error: string length {} out of range 0-21.", len),
+                code: ErrorCode::ServerError(-32003),
+                message: format!("Validation error: string length {} out of range 0-21", len),
                 data: None,
             },
             OledError::MissingParameter { e } => e.clone(),
