@@ -7,7 +7,7 @@ extern crate ssd1306;
 mod error;
 
 use std::{
-    process,
+    env, process,
     result::Result,
     sync::{Arc, Mutex},
 };
@@ -198,12 +198,19 @@ pub fn run() -> Result<(), OledError> {
         Ok(Value::String("success".into()))
     });
 
-    info!("Creating JSON-RPC server.");
+    let http_server =
+        env::var("PEACH_OLED_SERVER").unwrap_or_else(|_| "127.0.0.1:5112".to_string());
+
+    info!("Starting JSON-RPC server on {}.", http_server);
     let server = ServerBuilder::new(io)
         .cors(DomainsValidation::AllowOnly(vec![
             AccessControlAllowOrigin::Null,
         ]))
-        .start_http(&"127.0.0.1:3031".parse().unwrap())
+        .start_http(
+            &http_server
+                .parse()
+                .expect("Invalid HTTP address and port combination"),
+        )
         .expect("Unable to start RPC server");
 
     info!("Listening for requests.");
