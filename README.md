@@ -10,10 +10,11 @@ OLED microservice module for PeachCloud. Write to a 128x64 OLED display with SDD
 
 | Method | Parameters | Description |
 | --- | --- | --- |
-| `write` | `x_coord`, `y_coord`, `string`, `font_size` | Write message to display buffer for given co-ordinates using given font size |
-| `draw` | `bytes`, `width`, `height`, `x_coord`, `y_coord` | Draw graphic to display buffer for given byte array, dimensions and co-ordinates |
 | `clear` | | Clear the display buffer |
+| `draw` | `bytes`, `width`, `height`, `x_coord`, `y_coord` | Draw graphic to display buffer for given byte array, dimensions and co-ordinates |
 | `flush` | | Flush the display |
+| `ping` | | Respond with `success` if microservice is running |
+| `write` | `x_coord`, `y_coord`, `string`, `font_size` | Write message to display buffer for given co-ordinates using given font size |
 
 | Font Sizes |
 | --- |

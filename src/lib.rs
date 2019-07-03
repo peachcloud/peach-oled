@@ -160,6 +160,8 @@ pub fn run() -> Result<(), OledError> {
 
     let oled_clone = Arc::clone(&oled);
 
+    io.add_method("ping", |_: Params| Ok(Value::String("success".to_string())));
+
     io.add_method("write", move |params: Params| {
         info!("Received a 'write' request.");
         let m: Result<Msg, Error> = params.parse();
