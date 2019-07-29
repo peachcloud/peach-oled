@@ -11,7 +11,7 @@ jsonrpc-test = "11.0.0"
 linux-embedded-hal = "0.2.2"
 embedded-graphics = "0.4.7"
 tinybmp = "0.1.0"
-ssd1306 = "0.2.4"
+ssd1306 = "0.2.6"
 serde = { version = "1.0.87", features = ["derive"] }
 serde_json = "1.0.39"
 log = "0.4.0"

@@ -26,7 +26,7 @@ use snafu::{ensure, ResultExt};
 use ssd1306::prelude::*;
 use ssd1306::Builder;
 
-use crate::error::{I2CError, InvalidCoordinate, InvalidString, OledError};
+use crate::error::{BoxError, I2CError, InvalidCoordinate, InvalidString, OledError};
 
 //define the Graphic struct for receiving draw commands
 #[derive(Debug, Deserialize)]
@@ -94,7 +94,7 @@ fn validate(m: &Msg) -> Result<(), OledError> {
     Ok(())
 }
 
-pub fn run() -> Result<(), OledError> {
+pub fn run() -> Result<(), BoxError> {
     info!("Starting up.");
 
     debug!("Creating interface for I2C device.");

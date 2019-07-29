@@ -1,7 +1,11 @@
 extern crate linux_embedded_hal as hal;
 
+use std::error;
+
 use jsonrpc_core::{types::error::Error, ErrorCode};
 use snafu::Snafu;
+
+pub type BoxError = Box<dyn error::Error>;
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility(pub(crate)))]
@@ -37,7 +41,7 @@ impl From<OledError> for Error {
         match &err {
             OledError::I2CError { source } => Error {
                 code: ErrorCode::ServerError(-32000),
-                message: format!("I2C device error: {}", source),
+                message: format!("Failed to create interface for I2C device: {}", source),
                 data: None,
             },
             OledError::InvalidCoordinate {

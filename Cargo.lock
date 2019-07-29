@@ -154,7 +154,7 @@ dependencies = [
 
 [[package]]
 name = "embedded-hal"
-version = "0.2.2"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "nb 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -453,7 +453,7 @@ version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "cast 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "embedded-hal 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "embedded-hal 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "i2cdev 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "spidev 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sysfs_gpio 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -649,7 +649,7 @@ dependencies = [
  "serde 1.0.89 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.39 (registry+https://github.com/rust-lang/crates.io-index)",
  "snafu 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "ssd1306 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ssd1306 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "tinybmp 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -929,11 +929,11 @@ dependencies = [
 
 [[package]]
 name = "ssd1306"
-version = "0.2.4"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "embedded-graphics 0.4.7 (registry+https://github.com/rust-lang/crates.io-index)",
- "embedded-hal 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "embedded-hal 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -1322,7 +1322,7 @@ dependencies = [
 "checksum crossbeam-queue 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7c979cd6cfe72335896575c6b5688da489e420d36a27a0b9eb0c73db574b4a4b"
 "checksum crossbeam-utils 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)" = "f8306fcef4a7b563b76b7dd949ca48f52bc1141aa067d2ea09565f3e2652aa5c"
 "checksum embedded-graphics 0.4.7 (registry+https://github.com/rust-lang/crates.io-index)" = "da4842bff1d962ccc44d2c796f80a0c835d8ba68a4468364abe0d1bd0f25a27d"
-"checksum embedded-hal 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "9880e55238830314d41d88f1ac7a819d495799c3cc3bc392cc172bab26428c33"
+"checksum embedded-hal 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)" = "ee4908a155094da7723c2d60d617b820061e3b4efcc3d9e293d206a5a76c170b"
 "checksum env_logger 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)" = "b61fa891024a945da30a9581546e8cfaf5602c7b3f4c137a2805cf388f92075a"
 "checksum failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)" = "795bd83d3abeb9220f257e597aa0080a508b27533824adf336529648f6abf7e2"
 "checksum failure_derive 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)" = "ea1063915fd7ef4309e222a5a07cf9c319fb9c7836b1f89b85458672dbb127e1"
@@ -1407,7 +1407,7 @@ dependencies = [
 "checksum snafu 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)" = "5712353226e5ccb06c8f9b1cab819654b25514479523755ffa94703ceeb00e4f"
 "checksum snafu-derive 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)" = "78178fb0042da2d70bba6e3fb26b6412c4824a22b7fe434f5e082d2ca0b894ee"
 "checksum spidev 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "1ba01d3ef92a37e898fecac76cd3e1b33c999395e2d70787608d9678c4293e04"
-"checksum ssd1306 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)" = "d1d7bd69d115ead2c9b0b2ba276d125ad51e4172e897f4d31512fe0014a86bd5"
+"checksum ssd1306 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)" = "57d818022001ebca8cec28b230700660a3f6a027123c8193c5e76e9764d087f3"
 "checksum stable_deref_trait 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "dba1a27d3efae4351c8051072d619e3ade2820635c3958d826bfea39d59b54c8"
 "checksum string 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)" = "b639411d0b9c738748b5397d5ceba08e648f4f1992231aa859af1a017f31f60b"
 "checksum syn 0.15.29 (registry+https://github.com/rust-lang/crates.io-index)" = "1825685f977249735d510a242a6727b46efe914bb67e38d30c071b1b72b1d5c2"
