@@ -58,7 +58,7 @@ Run the binary:
 
 With microservice running, open a second terminal window and use `curl` to call server methods:
 
-`curl -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "method": "write", "params" : {"x_coord": 0, "y_coord": 0, "string": "Welcome to PeachCloud!", "font_size": "6x8" }, "id":1 }' 127.0.0.1:3031`
+`curl -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "method": "write", "params" : {"x_coord": 0, "y_coord": 0, "string": "Welcome to PeachCloud", "font_size": "6x8" }, "id":1 }' 127.0.0.1:5112`
 
 Server responds with:
 
@@ -68,11 +68,11 @@ OLED will remain blank because no flush command has been issued.
 
 Write to the second line of the display:
 
-`curl -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "method": "write", "params" : {"x_coord": 0, "y_coord": 8, "string": "Born in cypherspace", "font_size": "6x12" }, "id":1 }' 127.0.0.1:3031`
+`curl -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "method": "write", "params" : {"x_coord": 0, "y_coord": 8, "string": "Born in cypherspace", "font_size": "6x12" }, "id":1 }' 127.0.0.1:5112`
 
 Flush the display:
 
-`curl -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "method": "flush", "id":1 }' 127.0.0.1:3031`
+`curl -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "method": "flush", "id":1 }' 127.0.0.1:5112`
 
 OLED display shows:
 
@@ -97,7 +97,7 @@ An error is returned if one or all of the expected parameters are not supplied:
 
 With microservice running, open a second terminal window and use `curl` to call server methods:
 
-`curl -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "method": "draw", "params" : {"bytes": [30, 0, 33, 0, 64, 128, 128, 64, 140, 64, 140, 64, 128, 64, 64, 128, 33, 0, 30, 0], "width": 10, "height": 10, "x_coord": 32, "y_coord": 32}, "id":1 }' 127.0.0.1:3031`
+`curl -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "method": "draw", "params" : {"bytes": [30, 0, 33, 0, 64, 128, 128, 64, 140, 64, 140, 64, 128, 64, 64, 128, 33, 0, 30, 0], "width": 10, "height": 10, "x_coord": 32, "y_coord": 32}, "id":1 }' 127.0.0.1:5112`
 
 Server responds with:
 
@@ -107,7 +107,7 @@ OLED will remain blank because no flush command has been issued.
 
 Flush the display:
 
-`curl -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "method": "flush", "id":1 }' 127.0.0.1:3031`
+`curl -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "method": "flush", "id":1 }' 127.0.0.1:5112`
 
 OLED display shows a 10x10 graphic of a dot inside a circle.
 
@@ -117,7 +117,7 @@ No validation checks are currently performed on the parameters of the `draw` RPC
 
 **Clear the Display**
 
-`curl -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "method": "clear", "id":1 }' 127.0.0.1:3031`
+`curl -X POST -H "Content-Type: application/json" -d '{"jsonrpc": "2.0", "method": "clear", "id":1 }' 127.0.0.1:5112`
 
 Server responds with:
 
