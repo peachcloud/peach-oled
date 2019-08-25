@@ -47,6 +47,12 @@ pub struct Msg {
     font_size: String,
 }
 
+//definte the On struct for receiving power on/off commands
+#[derive(Debug, Deserialize)]
+pub struct On {
+    on: bool,
+}
+
 fn validate(m: &Msg) -> Result<(), OledError> {
     ensure!(
         m.string.len() <= 21,
@@ -161,6 +167,24 @@ pub fn run() -> Result<(), BoxError> {
     let oled_clone = Arc::clone(&oled);
 
     io.add_method("ping", |_: Params| Ok(Value::String("success".to_string())));
+
+    io.add_method("power", move |params: Params| {
+        let o: Result<On, Error> = params.parse();
+        let o: On = o?;
+        let mut oled = oled_clone.lock().unwrap();
+        if o.on {
+            info!("Turning the display on.");
+        } else {
+            info!("Turnin the display off.");
+        }
+        oled.display_on(o.on).unwrap_or_else(|_| {
+            error!("Problem turning the display on.");
+            process::exit(1);
+        });
+        Ok(Value::String("success".into()))
+    });
+
+    let oled_clone = Arc::clone(&oled);
 
     io.add_method("write", move |params: Params| {
         info!("Received a 'write' request.");
