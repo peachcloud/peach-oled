@@ -47,11 +47,11 @@ Clone this repo:
 Move into the repo and compile:
 
 `cd peach-oled`  
-`cargo build`
+`cargo build --release`
 
 Run the binary:
 
-`./target/debug/peach-oled`
+`./target/release/peach-oled`
 
 ### Example Usage
 
