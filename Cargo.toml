@@ -3,6 +3,16 @@ name = "peach-oled"
 version = "0.1.0"
 authors = ["Andrew Reid <gnomad@cryptolab.net>"]
 edition = "2018"
+description = "Write and draw to OLED display using JSON-RPC over HTTP."
+homepage = "https://opencollective.com/peachcloud"
+repository = "https://github.com/peachcloud/peach-oled"
+readme = "README.md"
+license = "AGPL-3.0-only"
+publish = false
+
+[badges]
+travis-ci = { repository = "peachcloud/peach-oled", branch = "master" }
+maintenance = { status = "actively-developed" }
 
 [dependencies]
 jsonrpc-core = "11.0.0"
