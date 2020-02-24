@@ -1,0 +1,12 @@
+[Unit]
+Description=JSON-RPC microservice for writing and drawing to an OLED display over HTTP.
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecStart=/usr/bin/peach-oled
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
