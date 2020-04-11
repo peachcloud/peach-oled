@@ -10,6 +10,18 @@ readme = "README.md"
 license = "AGPL-3.0-only"
 publish = false
 
+[package.metadata.deb]
+depends = "$auto"
+extended-description = """\
+peach-oled allows writing and drawing to a 128x64 pixel OLED display \
+with SDD1306 driver (I2C) using JSON-RPC over HTTP."""
+maintainer-scripts="debian"
+assets = [
+    ["target/release/peach-oled", "usr/bin/", "755"],
+    ["debian/peach-oled.service", "/lib/systemd/system/peach-oled.service", "644"],
+    ["README.md", "usr/share/doc/peach-oled/README", "644"],
+]
+
 [badges]
 travis-ci = { repository = "peachcloud/peach-oled", branch = "master" }
 maintenance = { status = "actively-developed" }
