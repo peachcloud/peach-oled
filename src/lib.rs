@@ -197,25 +197,25 @@ pub fn run() -> Result<(), BoxError> {
         info!("Writing to the display.");
         if m.font_size == "6x8" {
             oled.draw(
-                Font6x8::render_str(&m.string.to_string())
+                Font6x8::render_str(&m.string)
                     .translate(Coord::new(m.x_coord, m.y_coord))
                     .into_iter(),
             );
         } else if m.font_size == "6x12" {
             oled.draw(
-                Font6x12::render_str(&m.string.to_string())
+                Font6x12::render_str(&m.string)
                     .translate(Coord::new(m.x_coord, m.y_coord))
                     .into_iter(),
             );
         } else if m.font_size == "8x16" {
             oled.draw(
-                Font8x16::render_str(&m.string.to_string())
+                Font8x16::render_str(&m.string)
                     .translate(Coord::new(m.x_coord, m.y_coord))
                     .into_iter(),
             );
         } else if m.font_size == "12x16" {
             oled.draw(
-                Font12x16::render_str(&m.string.to_string())
+                Font12x16::render_str(&m.string)
                     .translate(Coord::new(m.x_coord, m.y_coord))
                     .into_iter(),
             );
