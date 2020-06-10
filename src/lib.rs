@@ -166,7 +166,7 @@ pub fn run() -> Result<(), BoxError> {
 
     let oled_clone = Arc::clone(&oled);
 
-    io.add_method("ping", |_: Params| Ok(Value::String("success".to_string())));
+    io.add_method("ping", |_| Ok(Value::String("success".to_string())));
 
     io.add_method("power", move |params: Params| {
         let o: Result<On, Error> = params.parse();
