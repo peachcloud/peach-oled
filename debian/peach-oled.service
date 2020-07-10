@@ -5,6 +5,7 @@ Description=JSON-RPC microservice for writing and drawing to an OLED display ove
 Type=simple
 User=root
 Group=root
+Environment="RUST_LOG=error"
 ExecStart=/usr/bin/peach-oled
 Restart=always
 
