@@ -1,9 +1,3 @@
-#[macro_use]
-extern crate log;
-extern crate embedded_graphics;
-extern crate linux_embedded_hal as hal;
-extern crate ssd1306;
-
 mod error;
 
 use std::{
@@ -21,6 +15,8 @@ use jsonrpc_core::{types::error::Error, IoHandler, Params, Value};
 use jsonrpc_http_server::{AccessControlAllowOrigin, DomainsValidation, ServerBuilder};
 #[allow(unused_imports)]
 use jsonrpc_test as test;
+use linux_embedded_hal as hal;
+use log::{debug, error, info};
 use serde::Deserialize;
 use snafu::{ensure, ResultExt};
 use ssd1306::prelude::*;

@@ -1,8 +1,7 @@
-extern crate linux_embedded_hal as hal;
-
 use std::error;
 
 use jsonrpc_core::{types::error::Error, ErrorCode};
+use linux_embedded_hal as hal;
 use snafu::Snafu;
 
 pub type BoxError = Box<dyn error::Error>;
