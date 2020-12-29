@@ -1,6 +1,6 @@
 [package]
 name = "peach-oled"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Andrew Reid <gnomad@cryptolab.net>"]
 edition = "2018"
 description = "Write and draw to OLED display using JSON-RPC over HTTP."
