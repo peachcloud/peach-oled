@@ -16,7 +16,7 @@ extended-description = """\
 peach-oled allows writing and drawing to a 128x64 pixel OLED display \
 with SDD1306 driver (I2C) using JSON-RPC over HTTP."""
 maintainer-scripts="debian"
-systemd-units = { unit-name = 'peach-oled' }
+systemd-units = { unit-name = "peach-oled" }
 assets = [
     ["target/release/peach-oled", "usr/bin/", "755"],
     ["README.md", "usr/share/doc/peach-oled/README", "644"],
